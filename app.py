@@ -5,9 +5,9 @@ import os
 import time
 
 app = Flask(__name__)
-CORS(app)  # Разрешаем запросы с фронтенда
+CORS(app)
 
-# ===================== БАЗА ДАННЫХ =====================
+# База данных
 def get_db():
     conn = sqlite3.connect('bot.db')
     conn.row_factory = sqlite3.Row
@@ -16,7 +16,6 @@ def get_db():
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
-    
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +26,6 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    
     conn.commit()
     conn.close()
 
@@ -36,35 +34,27 @@ init_db()
 # ===================== API =====================
 @app.route('/')
 def home():
-    return jsonify({'status': 'ok', 'service': 'Telegram Bot Backend'})
+    return jsonify({
+        'status': 'ok', 
+        'service': 'Telegram Bot Backend',
+        'version': '1.0'
+    })
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    """Вход в систему"""
     data = request.json
     
-    # Проверяем логин и пароль
-    if (data.get('username') == 'admin' and 
-        data.get('password') == '123'):
-        
+    if data.get('username') == 'admin' and data.get('password') == '123':
         return jsonify({
             'success': True,
             'token': 'admin_token_' + str(int(time.time())),
-            'user': {
-                'username': 'admin',
-                'name': 'Администратор',
-                'role': 'admin'
-            }
+            'user': {'username': 'admin', 'name': 'Администратор'}
         })
     
-    return jsonify({
-        'success': False,
-        'error': 'Неверный логин или пароль'
-    })
+    return jsonify({'success': False, 'error': 'Неверные данные'})
 
 @app.route('/api/stats', methods=['GET'])
 def stats():
-    """Статистика для дашборда"""
     conn = get_db()
     cursor = conn.cursor()
     
@@ -85,32 +75,21 @@ def stats():
 
 @app.route('/api/users', methods=['GET'])
 def get_users():
-    """Получить всех пользователей"""
     conn = get_db()
     cursor = conn.cursor()
     
     cursor.execute("SELECT * FROM users ORDER BY id DESC")
     rows = cursor.fetchall()
     
-    # Преобразуем в словари
     users = []
     for row in rows:
-        users.append({
-            'id': row[0],
-            'telegram_id': row[1],
-            'username': row[2],
-            'first_name': row[3],
-            'balance': row[4],
-            'created_at': row[5]
-        })
+        users.append(dict(row))
     
     conn.close()
-    
     return jsonify({'users': users})
 
 @app.route('/api/user/add', methods=['POST'])
 def add_user():
-    """Добавить пользователя"""
     data = request.json
     
     conn = get_db()
@@ -129,7 +108,6 @@ def add_user():
         
         conn.commit()
         conn.close()
-        
         return jsonify({'success': True})
     except Exception as e:
         conn.close()
@@ -137,13 +115,12 @@ def add_user():
 
 @app.route('/api/message/send', methods=['POST'])
 def send_message():
-    """Отправить сообщение через бота"""
     data = request.json
     
     try:
+        import requests
         BOT_TOKEN = '8402586959:AAGRTEGtSy7KoUlJDZvaNSxL3JKuZPWUMrY'
         
-        import requests
         response = requests.post(
             f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
             json={
@@ -157,7 +134,6 @@ def send_message():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# ===================== ЗАПУСК =====================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port)
