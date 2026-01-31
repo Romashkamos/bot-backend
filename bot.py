@@ -8,7 +8,7 @@ from datetime import datetime
 # Конфигурация
 TOKEN = '8402586959:AAGRTEGtSy7KoUlJDZvaNSxL3JKuZPWUMrY'
 BACKEND_URL = 'https://bot-backend-production-14a7.up.railway.app'
-ADMIN_ID = 123456789  # Замени на свой Telegram ID (узнай через @userinfobot)
+ADMIN_ID = 7501734808  # Замени на свой Telegram ID (узнай через @userinfobot)
 
 bot = telebot.TeleBot(TOKEN)
 
